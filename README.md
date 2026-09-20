@@ -1,23 +1,57 @@
 # Hi, I'm Mert 👋
 
-I'm a Computer Engineering student starting my 3rd year.
+I'm a 3rd-year Computer Engineering student who enjoys learning by building projects.
 
-I use GitHub to document the projects I build while learning software development. I'm currently interested in backend development, web applications, and interactive 3D experiences on the web.
+I'm currently exploring **backend development, modern web applications, and interactive 3D experiences**.
 
 ## Projects
 
-### [MertBank](https://github.com/Piercies3sc/MertBank)
+### 🏋️ Fitness 3D
 
-A demo banking web application built with ASP.NET Core, Entity Framework Core, and SQLite. It combines a REST API and browser interface for multi-currency demo accounts, transfers, exchange-rate data, and transaction history.
+A personal fitness web application I'm building to explore full-stack development and interactive 3D on the web.
 
-### [Three.js 3D Portfolio Viewer](https://github.com/Piercies3sc/threejs-3d-portfolio-viewer)
+It includes workout planning and logging, training history, progress tracking, and an interactive 3D anatomy system for visualizing trained muscle groups.
 
-An interactive portfolio viewer for GLB models built with Three.js and WebGL. It includes multiple viewing modes, responsive mouse and touch controls, project filtering, and Turkish/English interface text.
+`Next.js` `React` `TypeScript` `Supabase` `PostgreSQL` `Three.js`
 
-### [Occupational Therapy Web Platform](https://github.com/Piercies3sc/ergoterapi-web-platform)
+---
 
-A bilingual multi-page website for occupational therapy topics, exercises, certificates, and media. I used shared JavaScript and CSS alongside small Python scripts that help keep repeated page sections consistent.
+### 🏦 [MertBank](https://github.com/Piercies3sc/MertBank)
 
-## Technologies I'm Using and Learning
+A demo banking application I built while learning backend development with ASP.NET Core.
 
-C# · ASP.NET Core · Entity Framework Core · SQLite · JavaScript · HTML · CSS · Three.js · WebGL · Python · Docker · Git
+The project includes demo accounts, transfers, transaction history, and exchange-rate data.
+
+`C#` `ASP.NET Core` `Entity Framework Core` `SQLite`
+
+---
+
+### 🧊 [Three.js 3D Portfolio Viewer](https://github.com/Piercies3sc/threejs-3d-portfolio-viewer)
+
+An interactive web viewer for GLB models built while learning Three.js and WebGL.
+
+It supports multiple viewing modes, mouse and touch controls, project filtering, and Turkish/English interface text.
+
+`JavaScript` `Three.js` `WebGL`
+
+---
+
+### 🧠 [Occupational Therapy Web Platform](https://github.com/Piercies3sc/ergoterapi-web-platform)
+
+A bilingual web platform for occupational therapy content, exercises, certificates, and media.
+
+This project helped me practice building and organizing a larger multi-page website.
+
+`JavaScript` `HTML` `CSS` `Python`
+
+[Live Demo](https://hazalpural.netlify.app/) · [Repository](https://github.com/Piercies3sc/ergoterapi-web-platform)
+
+## What I'm Working With
+
+`C#` `ASP.NET Core` `Entity Framework Core` `JavaScript` `TypeScript` `React` `Next.js`
+
+`Supabase` `PostgreSQL` `SQLite` `Three.js` `WebGL` `Python`
+
+`Git` `GitHub` `Docker`
+Most of the repositories here are projects I've built while learning, experimenting, or working on personal and university projects.
+
