@@ -3,7 +3,7 @@
 Generate dark_mode.svg and light_mode.svg for GitHub profile.
 Fetches real statistics from GitHub API for Piercies3sc.
 Renders a dense, clean, terminal-inspired profile card with warm amber & red styling.
-1200x560 canvas with panel_x=405 for generous right-side padding.
+1080x520 canvas with large ASCII portrait and readable 18px terminal text.
 """
 
 import os
@@ -209,15 +209,16 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         accent_red = "#cf222e"       # red accent
         divider_color = "#d0d7de"
 
-    width = 1200
-    height = 560
+    # SVG Canvas: 1080x520 (fills card, large content scale)
+    width = 1080
+    height = 520
     
-    # ASCII configuration (62 lines, 103 chars)
-    # Kept approximately the same size, balanced on the left
-    ascii_font_size = 5.8
-    ascii_line_height = 7.3
+    # ASCII configuration (62 lines, 102 chars)
+    # Scaled up to fill ~40-42% width and ~91% height
+    ascii_font_size = 7.0
+    ascii_line_height = 7.6
     ascii_start_x = 20
-    ascii_start_y = 52
+    ascii_start_y = 26
 
     ascii_elements = []
     for i, line in enumerate(ascii_lines):
@@ -229,14 +230,16 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     ascii_svg = "\n    ".join(ascii_elements)
 
     # Right panel configuration
-    # panel_x = 405 (moved 40px left from 445)
-    # Gutter from ASCII right edge (~380px) is ~25px
-    # Right padding from longest line (69 chars) is ~91px (at 10.2px/char) or ~41px (at 11px/char)
-    panel_x = 405
-    panel_y_start = 66
-    panel_line_h = 22
-    gap_h = 14
-    font_size = 17
+    # panel_x = 425 provides a clean 15-20px gutter from ASCII right edge
+    # Text sizes: 21px title, 19px section headers, 18px body text
+    # letter-spacing: -0.3px ensures comfortable fit with ~25px right padding
+    panel_x = 425
+    panel_y_start = 42
+    panel_line_h = 25
+    gap_h = 15
+    font_size = 18
+    header_size = 21
+    section_header_size = 19
 
     def format_item(label, total_width, value):
         # Prefix is '· ' (2) + label + ' ' (1) + dots + ' ' (1) = total_width
@@ -253,21 +256,21 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     panel_elements = []
     cur_y = panel_y_start
 
-    # 1. Header (divider: 50 dashes, total 63 chars)
+    # 1. Header (mert@github: 21px, divider: 52 dashes, total 65 chars)
     panel_elements.append(
-        f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="18px" font-weight="700" xml:space="preserve">'
+        f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{header_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_amber}">mert</tspan>'
         f'<tspan fill="{text_muted}">@</tspan>'
         f'<tspan fill="{accent_amber}">github</tspan>'
-        f'<tspan fill="{divider_color}">  --------------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}">  ----------------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h + gap_h
 
     # 2. System: OS, Uptime
     system_items = [
-        ("OS:", 31, "Windows 11, macOS, iOS"),
-        ("Uptime:", 31, "3rd Year CENG Student"),
+        ("OS:", 28, "Windows 11, macOS, iOS"),
+        ("Uptime:", 28, "3rd Year CENG Student"),
     ]
     for label, width_col, val in system_items:
         panel_elements.append(
@@ -278,9 +281,9 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
 
     # 3. Languages: Programming, Computer, Real
     lang_items = [
-        ("Languages.Programming:", 31, "C, C++, JavaScript, TypeScript, SQL"),
-        ("Languages.Computer:", 31, "HTML, CSS, JSON, Markdown"),
-        ("Languages.Real:", 31, "Turkish, English"),
+        ("Languages.Programming:", 28, "C, C++, JavaScript, TypeScript, SQL"),
+        ("Languages.Computer:", 28, "HTML, CSS, JSON, Markdown"),
+        ("Languages.Real:", 28, "Turkish, English"),
     ]
     for label, width_col, val in lang_items:
         panel_elements.append(
@@ -291,8 +294,8 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
 
     # 4. Hobbies: Software, Hardware
     hobby_items = [
-        ("Hobbies.Software:", 31, "AI Tools, Fine-tuning, Web Development"),
-        ("Hobbies.Hardware:", 31, "PC Building, Performance Tuning"),
+        ("Hobbies.Software:", 28, "AI Tools, Fine-tuning, Web Development"),
+        ("Hobbies.Hardware:", 28, "PC Building, Performance Tuning"),
     ]
     for label, width_col, val in hobby_items:
         panel_elements.append(
@@ -301,19 +304,19 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         cur_y += panel_line_h
     cur_y += gap_h
 
-    # 5. Contact Section Header (divider: 53 dashes, total 63 chars)
+    # 5. Contact Section Header (19px, divider: 55 dashes, total 65 chars)
     panel_elements.append(
-        f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" font-weight="700" xml:space="preserve">'
+        f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{section_header_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_red}">- </tspan>'
         f'<tspan fill="{accent_amber}">Contact</tspan>'
-        f'<tspan fill="{divider_color}"> -----------------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}"> -------------------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h
 
     contact_items = [
-        ("Email.Personal:", 31, "mertpural@gmail.com"),
-        ("Discord:", 31, "piercies3sc"),
+        ("Email.Personal:", 28, "mertpural@gmail.com"),
+        ("Discord:", 28, "piercies3sc"),
     ]
     for label, width_col, val in contact_items:
         panel_elements.append(
@@ -322,12 +325,12 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         cur_y += panel_line_h
     cur_y += gap_h
 
-    # 6. GitHub Stats Section Header (divider: 48 dashes, total 63 chars)
+    # 6. GitHub Stats Section Header (19px, divider: 50 dashes, total 65 chars)
     panel_elements.append(
-        f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" font-weight="700" xml:space="preserve">'
+        f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{section_header_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_red}">- </tspan>'
         f'<tspan fill="{accent_amber}">GitHub Stats</tspan>'
-        f'<tspan fill="{divider_color}"> ------------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}"> --------------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h
@@ -338,7 +341,7 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     stars_dots = "." * 8
     r_val = stats['repos']
     s_val = stats["stars"]
-    col1_spaces = " " * max(1, 38 - 18 - len(r_val))
+    col1_spaces = " " * max(1, 35 - 18 - len(r_val))
 
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" xml:space="preserve">'
@@ -359,7 +362,7 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     followers_dots = "." * 4
     c_val = stats['commits']
     f_val = stats["followers"]
-    col1_c_spaces = " " * max(1, 38 - 18 - len(c_val))
+    col1_c_spaces = " " * max(1, 35 - 18 - len(c_val))
 
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" xml:space="preserve">'
@@ -395,6 +398,9 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
       text {{
         font-feature-settings: "liga" 0;
         text-rendering: geometricPrecision;
+      }}
+      #info-panel text {{
+        letter-spacing: -0.3px;
       }}
     </style>
   </defs>
