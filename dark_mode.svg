@@ -94,9 +94,9 @@
     <text x="490" y="267.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">3D/WebGL.... </tspan><tspan fill="#e6edf3">Three.js, React Three Fiber</tspan></text>
     <text x="490" y="302.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14px" font-weight="700" fill="#ff7b25" xml:space="preserve">GitHub Stats</text>
     <text x="490" y="325.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">Repos....... </tspan><tspan fill="#e6edf3" font-weight="600">5</tspan></text>
-    <text x="490" y="348.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">Commits..... </tspan><tspan fill="#e6edf3" font-weight="600">38</tspan></text>
+    <text x="490" y="348.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">Commits..... </tspan><tspan fill="#e6edf3" font-weight="600">39</tspan></text>
     <text x="490" y="371.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">Stars....... </tspan><tspan fill="#e6edf3" font-weight="600">0</tspan></text>
     <text x="490" y="394.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">Followers... </tspan><tspan fill="#e6edf3" font-weight="600">0</tspan></text>
-    <text x="490" y="417.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">LOC......... </tspan><tspan fill="#e6edf3" font-weight="600">49,707</tspan></text>
+    <text x="490" y="417.0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13.5px" xml:space="preserve"><tspan fill="#8b949e">LOC......... </tspan><tspan fill="#e6edf3" font-weight="600">unavailable</tspan></text>
   </g>
 </svg>
