@@ -8,8 +8,8 @@
     </style>
   </defs>
 
-  <!-- Container Border -->
-  <rect x="0.5" y="0.5" width="1079" height="559" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+  <!-- SVG Background -->
+  <rect width="1080" height="560" fill="#ffffff"/>
 
   <!-- ASCII Portrait -->
   <g id="ascii-portrait">

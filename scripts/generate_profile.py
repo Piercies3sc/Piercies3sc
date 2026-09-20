@@ -3,6 +3,7 @@
 Generate dark_mode.svg and light_mode.svg for GitHub profile.
 Fetches real statistics from GitHub API for Piercies3sc.
 Renders a dense, clean, terminal-inspired profile card with warm amber & red styling.
+No window chrome, no dots, no inner frame.
 """
 
 import os
@@ -189,7 +190,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     
     if is_dark:
         bg = "#0d1117"
-        border = "#30363d"
         ascii_color = "#c9d1d9"
         
         # Dark mode: warm amber & red accents
@@ -200,7 +200,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         divider_color = "#30363d"
     else:
         bg = "#ffffff"
-        border = "#d0d7de"
         ascii_color = "#24292f"
         
         # Light mode: adapted for clean white background
@@ -407,8 +406,8 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     </style>
   </defs>
 
-  <!-- Container Border -->
-  <rect x="0.5" y="0.5" width="{width - 1}" height="{height - 1}" rx="6" fill="{bg}" stroke="{border}" stroke-width="1"/>
+  <!-- SVG Background -->
+  <rect width="{width}" height="{height}" fill="{bg}"/>
 
   <!-- ASCII Portrait -->
   <g id="ascii-portrait">
