@@ -1,27 +1,20 @@
-#!/usr/bin/env python3
-"""
-Generate dark_mode.svg and light_mode.svg for GitHub profile.
-Fetches real statistics from GitHub API for Piercies3sc.
-Renders a dense, clean, terminal-inspired profile card with warm amber & red styling.
-1080x520 canvas with large ASCII portrait and readable 18px terminal text.
-"""
-
 import os
 import re
 import html
 import json
 import time
-import subprocess
+import datetime
 import urllib.request
 import urllib.error
+import subprocess
 from pathlib import Path
 
 USERNAME = "Piercies3sc"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ASCII_PATH = REPO_ROOT / "assets" / "ascii-art.txt"
+CACHE_PATH = REPO_ROOT / "profile_stats_cache.json"
 DARK_SVG_PATH = REPO_ROOT / "dark_mode.svg"
 LIGHT_SVG_PATH = REPO_ROOT / "light_mode.svg"
-CACHE_PATH = REPO_ROOT / "profile_stats_cache.json"
 
 def get_headers():
     headers = {
@@ -63,27 +56,106 @@ def fetch_json(url):
         print(f"Error fetching {url}: {e}")
         return None, ""
 
-def load_cached_loc():
+def calculate_uptime():
+    """
+    Calculates age in calendar-aware years, months, and days from birth date 2004-05-17.
+    Uses Europe/Istanbul timezone.
+    """
+    try:
+        from zoneinfo import ZoneInfo
+        now = datetime.datetime.now(ZoneInfo("Europe/Istanbul")).date()
+    except Exception:
+        now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3))).date()
+    
+    birth = datetime.date(2004, 5, 17)
+    
+    years = now.year - birth.year
+    months = now.month - birth.month
+    days = now.day - birth.day
+    
+    if days < 0:
+        first_of_current_month = now.replace(day=1)
+        last_of_prev_month = first_of_current_month - datetime.timedelta(days=1)
+        days += last_of_prev_month.day
+        months -= 1
+        
+    if months < 0:
+        months += 12
+        years -= 1
+        
+    parts = []
+    parts.append(f"{years} {'year' if years == 1 else 'years'}")
+    parts.append(f"{months} {'month' if months == 1 else 'months'}")
+    parts.append(f"{days} {'day' if days == 1 else 'days'}")
+    return ", ".join(parts)
+
+def load_cached_stats():
     if CACHE_PATH.exists():
         try:
             with open(CACHE_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return data.get("loc_display") or (f"{data['loc']:,}" if data.get("loc") else None)
+                return json.load(f)
         except Exception as e:
             print(f"Error reading cache: {e}")
-    return None
+    return {}
 
-def save_cached_loc(loc_int, loc_str):
+def save_cached_stats(stats_dict):
     try:
         with open(CACHE_PATH, "w", encoding="utf-8") as f:
             json.dump({
-                "loc": loc_int,
-                "loc_display": loc_str,
+                **stats_dict,
                 "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             }, f, indent=2)
-        print(f"Saved real LOC to cache: {loc_str}")
+        print(f"Saved stats to cache: {stats_dict}")
     except Exception as e:
         print(f"Error writing cache: {e}")
+
+def fetch_contributed_repos():
+    """
+    Fetches real count of repositories Piercies3sc has contributed to.
+    Uses GitHub GraphQL API with fallback to Search API.
+    """
+    headers = get_headers()
+    # 1. Try GraphQL
+    graphql_url = "https://api.github.com/graphql"
+    query = """
+    query {
+      user(login: "%s") {
+        repositoriesContributedTo(contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY]) {
+          totalCount
+        }
+      }
+    }
+    """ % USERNAME
+    try:
+        req = urllib.request.Request(
+            graphql_url,
+            data=json.dumps({"query": query}).encode("utf-8"),
+            headers=headers,
+            method="POST"
+        )
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode())
+            count = data.get("data", {}).get("user", {}).get("repositoriesContributedTo", {}).get("totalCount")
+            if count is not None:
+                print(f"Fetched contributed repos via GraphQL: {count}")
+                return str(count)
+    except Exception as e:
+        print(f"GraphQL contributed repos error: {e}")
+
+    # 2. Fallback to Search API
+    try:
+        search_url = f"https://api.github.com/search/issues?q=author:{USERNAME}+-user:{USERNAME}"
+        req = urllib.request.Request(search_url, headers=headers)
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode())
+            count = data.get("total_count")
+            if count is not None:
+                print(f"Fetched contributed repos via Search API: {count}")
+                return str(count)
+    except Exception as e:
+        print(f"Search API contributed repos error: {e}")
+
+    return "unavailable"
 
 def fetch_stats():
     print(f"Fetching GitHub stats for {USERNAME}...")
@@ -99,19 +171,19 @@ def fetch_stats():
     if not repos:
         repos = []
     
-    # Filter public non-fork repos owned by USERNAME
     owned_repos = [r for r in repos if not r.get("fork", False)]
     stars_count = sum(r.get("stargazers_count", 0) for r in owned_repos)
     
+    contributed_count = fetch_contributed_repos()
+    
     total_commits = 0
-    total_loc_net = 0
+    total_add = 0
+    total_del = 0
     loc_reliable = True
     
     print(f"Processing {len(owned_repos)} owned repositories...")
     for r in owned_repos:
         repo_name = r["name"]
-        
-        # 1. Try to fetch stats/contributors (with retries if 202 Accepted)
         stats_url = f"https://api.github.com/repos/{USERNAME}/{repo_name}/stats/contributors"
         contrib_data = None
         for attempt in range(5):
@@ -125,10 +197,11 @@ def fetch_stats():
                             break
             except Exception:
                 pass
-            time.sleep(2.0)
+            time.sleep(1.5)
         
         repo_commits = 0
-        repo_loc = 0
+        repo_add = 0
+        repo_del = 0
         got_contrib = False
         
         if contrib_data:
@@ -136,51 +209,79 @@ def fetch_stats():
                 author_login = c.get("author", {}).get("login") if c.get("author") else None
                 if author_login == USERNAME or len(contrib_data) == 1:
                     repo_commits = c.get("total", 0)
-                    additions = sum(w.get("a", 0) for w in c.get("weeks", []))
-                    deletions = sum(w.get("d", 0) for w in c.get("weeks", []))
-                    repo_loc = additions - deletions
+                    weeks = c.get("weeks", [])
+                    repo_add = sum(w.get("a", 0) for w in weeks)
+                    repo_del = sum(w.get("d", 0) for w in weeks)
                     got_contrib = True
                     break
         
-        # Fallback for commits if contrib_data failed
+        # Fallback for 202 or missing stats: inspect commits individually if needed
         if not got_contrib:
-            commit_url = f"https://api.github.com/repos/{USERNAME}/{repo_name}/commits?author={USERNAME}&per_page=1"
+            commit_url = f"https://api.github.com/repos/{USERNAME}/{repo_name}/commits?author={USERNAME}&per_page=100"
             c_data, link = fetch_json(commit_url)
-            if c_data is not None:
-                if link:
-                    m = re.search(r'[?&]page=(\d+)[^>]*>;\s*rel="last"', link)
-                    if m:
-                        repo_commits = int(m.group(1))
-                    else:
-                        repo_commits = len(c_data)
-                else:
-                    repo_commits = len(c_data)
-            loc_reliable = False
+            if c_data is not None and isinstance(c_data, list):
+                repo_commits = len(c_data)
+                # Fetch detailed commit stats for additions/deletions
+                for c in c_data:
+                    sha = c.get("sha")
+                    if sha:
+                        c_detail, _ = fetch_json(f"https://api.github.com/repos/{USERNAME}/{repo_name}/commits/{sha}")
+                        if c_detail and "stats" in c_detail:
+                            repo_add += c_detail["stats"].get("additions", 0)
+                            repo_del += c_detail["stats"].get("deletions", 0)
+                got_contrib = True
+            else:
+                loc_reliable = False
         
         total_commits += repo_commits
-        total_loc_net += repo_loc
-        print(f"  {repo_name}: commits={repo_commits}, contrib_cached={got_contrib}")
+        total_add += repo_add
+        total_del += repo_del
+        print(f"  {repo_name}: commits={repo_commits}, add={repo_add}, del={repo_del}, contrib_cached={got_contrib}")
     
-    # Handle LOC: real calculation or last real cached value
-    if loc_reliable and total_loc_net > 0:
-        loc_display = f"{total_loc_net:,}"
-        save_cached_loc(total_loc_net, loc_display)
-        print(f"Calculated and cached real LOC: {loc_display}")
+    total_loc_net = total_add - total_del
+    cached = load_cached_stats()
+    
+    if loc_reliable and total_add > 0:
+        loc_net_display = f"{total_loc_net:,}"
+        loc_add_display = f"{total_add:,}"
+        loc_del_display = f"{total_del:,}"
+        save_cached_stats({
+            "loc_net": total_loc_net,
+            "loc_net_display": loc_net_display,
+            "loc_additions": total_add,
+            "loc_additions_display": loc_add_display,
+            "loc_deletions": total_del,
+            "loc_deletions_display": loc_del_display,
+            "contributed": contributed_count
+        })
+        print(f"Calculated and cached real LOC: net={loc_net_display}, add={loc_add_display}, del={loc_del_display}")
     else:
-        cached = load_cached_loc()
-        if cached:
-            loc_display = cached
-            print(f"Using previously cached real LOC: {loc_display}")
+        if cached.get("loc_net_display"):
+            loc_net_display = cached["loc_net_display"]
+            loc_add_display = cached.get("loc_additions_display", "0")
+            loc_del_display = cached.get("loc_deletions_display", "0")
+            print(f"Using previously cached real LOC: net={loc_net_display}, add={loc_add_display}, del={loc_del_display}")
         else:
-            loc_display = "unavailable"
+            loc_net_display = "unavailable"
+            loc_add_display = "unavailable"
+            loc_del_display = "unavailable"
             print("LOC unavailable (no cache found)")
+            
+        if contributed_count == "unavailable" and cached.get("contributed"):
+            contributed_count = cached["contributed"]
+    
+    uptime_display = calculate_uptime()
     
     stats = {
+        "uptime": uptime_display,
         "repos": str(repos_count),
+        "contributed": contributed_count,
         "commits": str(total_commits),
         "stars": str(stars_count),
         "followers": str(followers_count),
-        "loc": loc_display
+        "loc_net": loc_net_display,
+        "loc_add": loc_add_display,
+        "loc_del": loc_del_display
     }
     print(f"Stats summary: {stats}")
     return stats
@@ -191,30 +292,27 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     if is_dark:
         bg = "#0d1117"
         ascii_color = "#c9d1d9"
-        
-        # Dark mode: warm amber & red accents
         primary_text = "#f0f6fc"     # soft white for values
         text_muted = "#6e7681"       # muted gray for dots & dividers
         accent_amber = "#d29922"     # warm amber / dark yellow for labels
         accent_red = "#f85149"       # red accent for bullets & section markers
         divider_color = "#30363d"
+        add_color = "#3fb950"        # dark mode green for additions
+        del_color = "#f85149"        # dark mode red for deletions
     else:
         bg = "#ffffff"
         ascii_color = "#24292f"
-        
-        # Light mode: adapted for clean white background
         primary_text = "#24292f"     # dark charcoal for values
         text_muted = "#57606a"       # muted dots
         accent_amber = "#9a6700"     # dark warm amber for labels
         accent_red = "#cf222e"       # red accent
         divider_color = "#d0d7de"
+        add_color = "#1a7f37"        # light mode green for additions
+        del_color = "#cf222e"        # light mode red for deletions
 
-    # SVG Canvas: 1080x520 (fills card, large content scale)
     width = 1080
     height = 520
     
-    # ASCII configuration (62 lines, 102 chars)
-    # Scaled up to fill ~40-42% width and ~91% height
     ascii_font_size = 7.0
     ascii_line_height = 7.6
     ascii_start_x = 20
@@ -229,10 +327,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         )
     ascii_svg = "\n    ".join(ascii_elements)
 
-    # Right panel configuration
-    # panel_x = 425 provides a clean 15-20px gutter from ASCII right edge
-    # Text sizes: 21px title, 19px section headers, 18px body text
-    # letter-spacing: -0.3px ensures comfortable fit with ~25px right padding
     panel_x = 425
     panel_y_start = 42
     panel_line_h = 25
@@ -242,7 +336,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     section_header_size = 19
 
     def format_item(label, total_width, value):
-        # Prefix is '· ' (2) + label + ' ' (1) + dots + ' ' (1) = total_width
         dots_count = max(1, total_width - len(label) - 4)
         dots_str = "." * dots_count
         return (
@@ -252,7 +345,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
             f'<tspan fill="{primary_text}">{html.escape(value)}</tspan>'
         )
 
-    # Rows structure
     panel_elements = []
     cur_y = panel_y_start
 
@@ -267,10 +359,10 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     )
     cur_y += panel_line_h + gap_h
 
-    # 2. System: OS, Uptime
+    # 2. System: OS, Uptime (dynamically calculated age)
     system_items = [
         ("OS:", 28, "Windows 11, macOS, iOS"),
-        ("Uptime:", 28, "3rd Year CENG Student"),
+        ("Uptime:", 28, stats["uptime"]),
     ]
     for label, width_col, val in system_items:
         panel_elements.append(
@@ -335,21 +427,30 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     )
     cur_y += panel_line_h
 
-    # GitHub Stats rows (2 columns)
-    # Repos / Stars
-    repos_dots = "." * 8
-    stars_dots = "." * 8
-    r_val = stats['repos']
+    # GitHub Stats rows (Andrew-style denser 3-row layout)
+    # Row 1: Repos: .... {repos} {Contributed: {contrib}} | Stars: ........ {stars}
+    r_val = stats["repos"]
+    contrib_val = stats["contributed"]
     s_val = stats["stars"]
-    col1_spaces = " " * max(1, 35 - 18 - len(r_val))
+    
+    # Prefix: '· Repos: .... ' (14) + r_val + ' {Contributed: ' (15) + contrib_val + '}' (1)
+    # Total left part length: 30 + len(r_val) + len(contrib_val)
+    left_part_len = 30 + len(r_val) + len(contrib_val)
+    # Align '| ' at column 35
+    col1_sep_spaces = " " * max(1, 35 - left_part_len)
+    stars_dots = "." * 8
 
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" xml:space="preserve">'
         f'<tspan fill="{accent_red}">\u00b7 </tspan>'
         f'<tspan fill="{accent_amber}">Repos:</tspan>'
-        f'<tspan fill="{text_muted}"> {repos_dots} </tspan>'
+        f'<tspan fill="{text_muted}"> .... </tspan>'
         f'<tspan fill="{primary_text}" font-weight="700">{html.escape(r_val)}</tspan>'
-        f'<tspan fill="{text_muted}">{col1_spaces}</tspan>'
+        f'<tspan fill="{text_muted}"> {{</tspan>'
+        f'<tspan fill="{accent_amber}">Contributed:</tspan>'
+        f'<tspan fill="{primary_text}" font-weight="700"> {html.escape(contrib_val)}</tspan>'
+        f'<tspan fill="{text_muted}">}}</tspan>'
+        f'<tspan fill="{text_muted}">{col1_sep_spaces}| </tspan>'
         f'<tspan fill="{accent_amber}">Stars:</tspan>'
         f'<tspan fill="{text_muted}"> {stars_dots} </tspan>'
         f'<tspan fill="{primary_text}" font-weight="700">{html.escape(s_val)}</tspan>'
@@ -357,20 +458,21 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     )
     cur_y += panel_line_h
 
-    # Commits / Followers
-    commits_dots = "." * 6
-    followers_dots = "." * 4
-    c_val = stats['commits']
+    # Row 2: Commits: .. {commits}                   | Followers: ..... {followers}
+    c_val = stats["commits"]
     f_val = stats["followers"]
-    col1_c_spaces = " " * max(1, 35 - 18 - len(c_val))
+    # Prefix: '· Commits: .. ' (14) + c_val
+    left_c_len = 14 + len(c_val)
+    col2_sep_spaces = " " * max(1, 35 - left_c_len)
+    followers_dots = "." * 5
 
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" xml:space="preserve">'
         f'<tspan fill="{accent_red}">\u00b7 </tspan>'
         f'<tspan fill="{accent_amber}">Commits:</tspan>'
-        f'<tspan fill="{text_muted}"> {commits_dots} </tspan>'
+        f'<tspan fill="{text_muted}"> .. </tspan>'
         f'<tspan fill="{primary_text}" font-weight="700">{html.escape(c_val)}</tspan>'
-        f'<tspan fill="{text_muted}">{col1_c_spaces}</tspan>'
+        f'<tspan fill="{text_muted}">{col2_sep_spaces}| </tspan>'
         f'<tspan fill="{accent_amber}">Followers:</tspan>'
         f'<tspan fill="{text_muted}"> {followers_dots} </tspan>'
         f'<tspan fill="{primary_text}" font-weight="700">{html.escape(f_val)}</tspan>'
@@ -378,15 +480,28 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     )
     cur_y += panel_line_h
 
-    # Lines of Code on GitHub
-    loc_dots = "." * 3
-    l_val = stats["loc"]
+    # Row 3: Lines of Code on GitHub: NET ( ADDITIONS++, DELETIONS-- )
+    loc_net_val = stats["loc_net"]
+    loc_add_val = stats["loc_add"]
+    loc_del_val = stats["loc_del"]
+    
+    if loc_add_val != "unavailable" and loc_del_val != "unavailable":
+        loc_tspan_breakdown = (
+            f'<tspan fill="{text_muted}"> ( </tspan>'
+            f'<tspan fill="{add_color}" font-weight="700">{html.escape(loc_add_val)}++</tspan>'
+            f'<tspan fill="{text_muted}">, </tspan>'
+            f'<tspan fill="{del_color}" font-weight="700">{html.escape(loc_del_val)}--</tspan>'
+            f'<tspan fill="{text_muted}"> )</tspan>'
+        )
+    else:
+        loc_tspan_breakdown = ""
+
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" xml:space="preserve">'
         f'<tspan fill="{accent_red}">\u00b7 </tspan>'
         f'<tspan fill="{accent_amber}">Lines of Code on GitHub:</tspan>'
-        f'<tspan fill="{text_muted}"> {loc_dots} </tspan>'
-        f'<tspan fill="{primary_text}" font-weight="700">{html.escape(l_val)}</tspan>'
+        f'<tspan fill="{primary_text}" font-weight="700"> {html.escape(loc_net_val)}</tspan>'
+        f'{loc_tspan_breakdown}'
         f'</text>'
     )
 
@@ -428,7 +543,6 @@ def main():
         ascii_lines = f.readlines()
     
     print(f"Loaded ASCII portrait: {len(ascii_lines)} lines from {ASCII_PATH}")
-    
     stats = fetch_stats()
     
     print("Generating dark_mode.svg...")
