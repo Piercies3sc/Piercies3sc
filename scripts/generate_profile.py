@@ -1,7 +1,8 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Generate dark_mode.svg and light_mode.svg for GitHub profile.
 Fetches real statistics from GitHub API for Piercies3sc.
+Renders an elegant, dense, terminal/neofetch-inspired profile card.
 """
 
 import os
@@ -9,6 +10,7 @@ import re
 import html
 import json
 import time
+import subprocess
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -24,7 +26,23 @@ def get_headers():
         "User-Agent": "Piercies3sc-Profile-Generator",
         "Accept": "application/vnd.github+json"
     }
-    token = os.environ.get("GITHUB_TOKEN")
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if not token:
+        try:
+            p = subprocess.Popen(
+                ["git", "credential", "fill"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            out, _ = p.communicate("protocol=https\nhost=github.com\n")
+            for line in out.splitlines():
+                if line.startswith("password="):
+                    token = line.split("=", 1)[1]
+                    break
+        except Exception:
+            pass
     if token:
         headers["Authorization"] = f"Bearer {token}"
     return headers
@@ -134,7 +152,6 @@ def fetch_stats():
 def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     is_dark = (theme == "dark")
     
-    # Palette
     if is_dark:
         bg = "#0d1117"
         border = "#30363d"
@@ -142,10 +159,18 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         dot_yellow = "#ffbd2e"
         dot_green = "#27c93f"
         ascii_color = "#c9d1d9"
-        accent = "#ff7b25"       # restrained orange
-        text_primary = "#e6edf3"
-        text_muted = "#8b949e"
-        divider = "#30363d"
+        
+        # Warm amber & red-orange theme
+        accent_amber = "#f59e0b"     # warm golden amber
+        accent_orange = "#f97316"    # vibrant red-orange
+        accent_bright = "#fbbf24"    # light amber highlight
+        
+        text_primary = "#f0f6fc"     # soft crisp white
+        text_turkish = "#9ca3af"     # muted light gray
+        text_label = "#e6edf3"       # clear label text
+        dots_color = "#30363d"       # subtle dark dots
+        slash_color = "#f59e0b"      # amber slash
+        divider_line = "#21262d"     # subtle section line
     else:
         bg = "#ffffff"
         border = "#d0d7de"
@@ -153,90 +178,159 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         dot_yellow = "#ffbd2e"
         dot_green = "#27c93f"
         ascii_color = "#24292f"
-        accent = "#ea580c"       # restrained orange
-        text_primary = "#1f2328"
-        text_muted = "#57606a"
-        divider = "#d0d7de"
+        
+        # Light mode: warm amber & red-orange
+        accent_amber = "#b45309"     # dark warm amber
+        accent_orange = "#c2410c"    # dark red-orange
+        accent_bright = "#b45309"    # dark amber highlight
+        
+        text_primary = "#1f2328"     # dark charcoal
+        text_turkish = "#656d76"     # muted charcoal
+        text_label = "#1f2328"       # dark label text
+        dots_color = "#d0d7de"       # light gray dots
+        slash_color = "#b45309"      # amber slash
+        divider_line = "#e1e4e8"     # light border line
 
-    width = 1040
-    height = 530
+    width = 1140
+    height = 560
     
-    # ASCII configuration
-    ascii_font_size = 6.9
-    ascii_line_height = 7.5
-    ascii_start_x = 28
+    # ASCII configuration (62 lines, 103 chars)
+    ascii_font_size = 6.6
+    ascii_line_height = 7.8
+    ascii_start_x = 24
     ascii_start_y = 52
 
-    # Build ASCII tspans / texts
     ascii_elements = []
     for i, line in enumerate(ascii_lines):
         y = ascii_start_y + i * ascii_line_height
         safe_line = html.escape(line.rstrip("\r\n"))
-        ascii_elements.append(f'<text x="{ascii_start_x}" y="{y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{ascii_font_size}px" fill="{ascii_color}" xml:space="preserve">{safe_line}</text>')
+        ascii_elements.append(
+            f'<text x="{ascii_start_x}" y="{y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{ascii_font_size}px" fill="{ascii_color}" xml:space="preserve">{safe_line}</text>'
+        )
     ascii_svg = "\n    ".join(ascii_elements)
 
     # Right panel configuration
-    panel_x = 490
-    panel_y_start = 82
-    panel_line_h = 23
-    font_size = 13.5
+    panel_x = 470
+    panel_y_start = 58
+    panel_line_h = 17.5
+    font_size = 10.8
 
-    # Rows definition: (type, label, value)
-    # Types: "header", "divider", "empty", "item", "section_header", "stat"
+    line_rule = "\u2500" * 58
+
+    # Rows: (kind, label, dots, val_en, slash, val_tr, accent_type)
     rows = [
-        ("header", "mert@github", ""),
-        ("divider", "--------------------------------", ""),
-        ("empty", "", ""),
-        ("item", "Role........ ", "Computer Engineering Student"),
-        ("item", "Focus....... ", "Backend, Web, Interactive 3D"),
-        ("empty", "", ""),
-        ("item", "Languages... ", "C, C++, JavaScript, TypeScript, SQL"),
-        ("item", "Web......... ", "React, Next.js, HTML, CSS, Tailwind"),
-        ("item", "Backend/DB.. ", "Supabase, PostgreSQL"),
-        ("item", "3D/WebGL.... ", "Three.js, React Three Fiber"),
-        ("empty", "", ""),
-        ("section_header", "GitHub Stats", ""),
-        ("stat", "Repos....... ", stats["repos"]),
-        ("stat", "Commits..... ", stats["commits"]),
-        ("stat", "Stars....... ", stats["stars"]),
-        ("stat", "Followers... ", stats["followers"]),
-        ("stat", "LOC......... ", stats["loc"]),
+        ("header", "mert", "@", "github", "", "", ""),
+        ("divider", "", "", "", "", "", ""),
+        ("gap", "", "", "", "", "", ""),
+        ("section", "ABOUT", "amber", line_rule, "", "", ""),
+        ("item", "Role", "........ ", "Computer Engineering Student", " / ", "Bilgisayar M\u00fchendisli\u011fi \u00d6\u011frencisi", "bilingual"),
+        ("item", "Focus", "....... ", "Backend, Web, Interactive 3D", " / ", "Backend, Web, Etkile\u015fimli 3D", "bilingual"),
+        ("item", "Learning", ".... ", "AI, Full-Stack, 3D Web", " / ", "Yapay Zeka, Full-Stack, 3D Web", "bilingual"),
+        ("item", "Interests", "... ", "Fine-tuning, AI tools, UI polish", " / ", "Fine-tuning, yapay zeka ara\u00e7lar\u0131, aray\u00fcz geli\u015ftirme", "bilingual"),
+        ("gap", "", "", "", "", "", ""),
+        ("section", "STACK", "orange", line_rule, "", "", ""),
+        ("item", "Languages", "... ", "C, C++, JavaScript, TypeScript, SQL", "", "", "single"),
+        ("item", "Frontend", ".... ", "React, Next.js, HTML, CSS, Tailwind", "", "", "single"),
+        ("item", "Backend/DB", ".. ", "Supabase, PostgreSQL", "", "", "single"),
+        ("item", "3D/WebGL", ".... ", "Three.js, React Three Fiber", "", "", "single"),
+        ("item", "Tools", "....... ", "Git, GitHub, Vercel, VS Code", "", "", "single"),
+        ("item", "Platforms", "... ", "Windows, macOS, iOS", "", "", "single"),
+        ("gap", "", "", "", "", "", ""),
+        ("section", "CONTACT", "amber", line_rule, "", "", ""),
+        ("item", "Email", "....... ", "mertpural@gmail.com", "", "", "single"),
+        ("item", "GitHub", "...... ", "Piercies3sc", "", "", "single"),
+        ("gap", "", "", "", "", "", ""),
+        ("section", "GITHUB STATS", "orange", line_rule, "", "", ""),
+        ("stat", "Repos", "....... ", stats["repos"], "amber", "", ""),
+        ("stat", "Commits", "..... ", stats["commits"], "orange", "", ""),
+        ("stat", "Stars", "....... ", stats["stars"], "amber", "", ""),
+        ("stat", "Followers", "... ", stats["followers"], "orange", "", ""),
+        ("stat", "LOC", "......... ", stats["loc"], "amber", "", ""),
+        ("gap", "", "", "", "", "", ""),
+        ("footer", "Status", "...... ", "Building and learning every day", " / ", "Her g\u00fcn geli\u015ftiriyorum", "")
     ]
 
     panel_elements = []
     cur_y = panel_y_start
-    for r_type, label, val in rows:
-        if r_type == "empty":
-            cur_y += 12
+    for r in rows:
+        r_type = r[0]
+        if r_type == "gap":
+            cur_y += 6
             continue
         
-        safe_label = html.escape(label)
-        safe_val = html.escape(val)
-
         if r_type == "header":
             panel_elements.append(
-                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15px" font-weight="700" fill="{accent}" xml:space="preserve">{safe_label}</text>'
+                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14px" font-weight="700" xml:space="preserve">'
+                f'<tspan fill="{accent_amber}">mert</tspan>'
+                f'<tspan fill="{text_turkish}">@</tspan>'
+                f'<tspan fill="{accent_orange}">github</tspan>'
+                f'</text>'
             )
         elif r_type == "divider":
             panel_elements.append(
-                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" fill="{divider}" xml:space="preserve">{safe_label}</text>'
+                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" fill="{divider_line}" xml:space="preserve">{line_rule}</text>'
             )
-        elif r_type == "item":
+        elif r_type == "section":
+            sec_title = r[1]
+            sec_accent = accent_amber if r[2] == "amber" else accent_orange
+            sec_line = r[3]
             panel_elements.append(
-                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" xml:space="preserve">'
-                f'<tspan fill="{text_muted}">{safe_label}</tspan>'
-                f'<tspan fill="{text_primary}">{safe_val}</tspan>'
+                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" font-weight="700" xml:space="preserve">'
+                f'<tspan fill="{sec_accent}">\u276f {sec_title}</tspan> '
+                f'<tspan fill="{divider_line}">{sec_line}</tspan>'
                 f'</text>'
             )
-        elif r_type == "section_header":
-            panel_elements.append(
-                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14px" font-weight="700" fill="{accent}" xml:space="preserve">{safe_label}</text>'
-            )
+        elif r_type == "item":
+            label = r[1]
+            dots = r[2]
+            val_en = html.escape(r[3])
+            slash = r[4]
+            val_tr = html.escape(r[5])
+            mode = r[6]
+            
+            if mode == "bilingual":
+                panel_elements.append(
+                    f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" xml:space="preserve">'
+                    f'<tspan fill="{text_label}">{label}</tspan>'
+                    f'<tspan fill="{dots_color}">{dots}</tspan>'
+                    f'<tspan fill="{text_primary}">{val_en}</tspan>'
+                    f'<tspan fill="{slash_color}">{slash}</tspan>'
+                    f'<tspan fill="{text_turkish}">{val_tr}</tspan>'
+                    f'</text>'
+                )
+            else:
+                panel_elements.append(
+                    f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" xml:space="preserve">'
+                    f'<tspan fill="{text_label}">{label}</tspan>'
+                    f'<tspan fill="{dots_color}">{dots}</tspan>'
+                    f'<tspan fill="{text_primary}">{val_en}</tspan>'
+                    f'</text>'
+                )
         elif r_type == "stat":
+            label = r[1]
+            dots = r[2]
+            val = html.escape(r[3])
+            stat_color = accent_bright if r[4] == "amber" else accent_orange
             panel_elements.append(
                 f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" xml:space="preserve">'
-                f'<tspan fill="{text_muted}">{safe_label}</tspan>'
-                f'<tspan fill="{text_primary}" font-weight="600">{safe_val}</tspan>'
+                f'<tspan fill="{text_label}">{label}</tspan>'
+                f'<tspan fill="{dots_color}">{dots}</tspan>'
+                f'<tspan fill="{stat_color}" font-weight="700">{val}</tspan>'
+                f'</text>'
+            )
+        elif r_type == "footer":
+            label = r[1]
+            dots = r[2]
+            val_en = html.escape(r[3])
+            slash = r[4]
+            val_tr = html.escape(r[5])
+            panel_elements.append(
+                f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="{font_size}px" xml:space="preserve">'
+                f'<tspan fill="{text_label}">{label}</tspan>'
+                f'<tspan fill="{dots_color}">{dots}</tspan>'
+                f'<tspan fill="{accent_amber}">{val_en}</tspan>'
+                f'<tspan fill="{dots_color}">{slash}</tspan>'
+                f'<tspan fill="{accent_orange}">{val_tr}</tspan>'
                 f'</text>'
             )
         cur_y += panel_line_h
