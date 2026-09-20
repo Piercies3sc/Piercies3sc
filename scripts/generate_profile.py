@@ -190,9 +190,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     if is_dark:
         bg = "#0d1117"
         border = "#30363d"
-        dot_red = "#ff5f56"
-        dot_yellow = "#ffbd2e"
-        dot_green = "#27c93f"
         ascii_color = "#c9d1d9"
         
         # Dark mode: warm amber & red accents
@@ -204,9 +201,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     else:
         bg = "#ffffff"
         border = "#d0d7de"
-        dot_red = "#ff5f56"
-        dot_yellow = "#ffbd2e"
-        dot_green = "#27c93f"
         ascii_color = "#24292f"
         
         # Light mode: adapted for clean white background
@@ -413,13 +407,8 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     </style>
   </defs>
 
-  <!-- Background and Window Border -->
-  <rect x="0.5" y="0.5" width="{width - 1}" height="{height - 1}" rx="8" fill="{bg}" stroke="{border}" stroke-width="1"/>
-
-  <!-- Terminal Window Controls -->
-  <circle cx="24" cy="20" r="4.5" fill="{dot_red}" opacity="0.85"/>
-  <circle cx="38" cy="20" r="4.5" fill="{dot_yellow}" opacity="0.85"/>
-  <circle cx="52" cy="20" r="4.5" fill="{dot_green}" opacity="0.85"/>
+  <!-- Container Border -->
+  <rect x="0.5" y="0.5" width="{width - 1}" height="{height - 1}" rx="6" fill="{bg}" stroke="{border}" stroke-width="1"/>
 
   <!-- ASCII Portrait -->
   <g id="ascii-portrait">

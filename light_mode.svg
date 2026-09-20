@@ -8,13 +8,8 @@
     </style>
   </defs>
 
-  <!-- Background and Window Border -->
-  <rect x="0.5" y="0.5" width="1079" height="559" rx="8" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
-
-  <!-- Terminal Window Controls -->
-  <circle cx="24" cy="20" r="4.5" fill="#ff5f56" opacity="0.85"/>
-  <circle cx="38" cy="20" r="4.5" fill="#ffbd2e" opacity="0.85"/>
-  <circle cx="52" cy="20" r="4.5" fill="#27c93f" opacity="0.85"/>
+  <!-- Container Border -->
+  <rect x="0.5" y="0.5" width="1079" height="559" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
 
   <!-- ASCII Portrait -->
   <g id="ascii-portrait">
