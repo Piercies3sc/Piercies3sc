@@ -1,28 +1,32 @@
 # Hi, I'm Mert 👋
 
-I'm a 3rd-year Computer Engineering student who enjoys learning by building projects.
+I'm a 3rd-year Computer Engineering student learning software development by building projects.
 
-I'm currently exploring **backend development, modern web applications, and interactive 3D experiences**.
+I'm currently interested in **backend development, web applications, and interactive 3D experiences on the web**.
 
 ## Projects
 
-### 🏋️ Fitness 3D
+### 🏋️ [Fitness 3D](https://github.com/Piercies3sc/fitness-3d)
 
-A personal fitness web application I'm building to explore full-stack development and interactive 3D on the web.
+A personal fitness application I'm building to explore full-stack development and interactive 3D experiences.
 
-It includes workout planning and logging, training history, progress tracking, and an interactive 3D anatomy system for visualizing trained muscle groups.
+The project combines workout tracking with an interactive 3D exercise library and muscle visualization.
 
-`Next.js` `React` `TypeScript` `Supabase` `PostgreSQL` `Three.js`
+`Next.js` `React` `TypeScript` `Supabase` `PostgreSQL` `React Three Fiber`
+
+**[Live Demo](https://fitness-3d-peach.vercel.app/)** · **[Repository](https://github.com/Piercies3sc/fitness-3d)**
 
 ---
 
 ### 🏦 [MertBank](https://github.com/Piercies3sc/MertBank)
 
-A demo banking application I built while learning backend development with ASP.NET Core.
+A demo banking web application I built while learning backend development with ASP.NET Core.
 
-The project includes demo accounts, transfers, transaction history, and exchange-rate data.
+It includes multi-currency demo accounts, transfers, exchange-rate data, and transaction history.
 
 `C#` `ASP.NET Core` `Entity Framework Core` `SQLite`
+
+**[Live Demo](https://mertbank.onrender.com/)** · **[Repository](https://github.com/Piercies3sc/MertBank)**
 
 ---
 
@@ -30,9 +34,11 @@ The project includes demo accounts, transfers, transaction history, and exchange
 
 An interactive web viewer for GLB models built while learning Three.js and WebGL.
 
-It supports multiple viewing modes, mouse and touch controls, project filtering, and Turkish/English interface text.
+It includes multiple viewing modes, responsive mouse and touch controls, project filtering, and Turkish/English interface support.
 
-`JavaScript` `Three.js` `WebGL`
+`JavaScript` `Three.js` `WebGL` `HTML` `CSS`
+
+**[Live Demo](https://mervetezel-3d.netlify.app/)** · **[Repository](https://github.com/Piercies3sc/threejs-3d-portfolio-viewer)**
 
 ---
 
@@ -44,14 +50,16 @@ This project helped me practice building and organizing a larger multi-page webs
 
 `JavaScript` `HTML` `CSS` `Python`
 
-[Live Demo](https://hazalpural.netlify.app/) · [Repository](https://github.com/Piercies3sc/ergoterapi-web-platform)
+**[Live Demo](https://hazalpural.netlify.app/)** · **[Repository](https://github.com/Piercies3sc/ergoterapi-web-platform)**
 
-## What I'm Working With
+---
 
-`C#` `ASP.NET Core` `Entity Framework Core` `JavaScript` `TypeScript` `React` `Next.js`
+## Technologies
 
-`Supabase` `PostgreSQL` `SQLite` `Three.js` `WebGL` `Python`
+`C#` · `JavaScript` · `TypeScript` · `Python`
+`ASP.NET Core` · `Entity Framework Core` · `Next.js` · `React`
+`Supabase` · `PostgreSQL` · `SQLite`
+`Three.js` · `React Three Fiber` · `WebGL`
+`Git` · `GitHub` · `Docker`
 
-`Git` `GitHub` `Docker`
-Most of the repositories here are projects I've built while learning, experimenting, or working on personal and university projects.
 
