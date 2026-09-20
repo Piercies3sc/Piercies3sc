@@ -3,7 +3,7 @@
 Generate dark_mode.svg and light_mode.svg for GitHub profile.
 Fetches real statistics from GitHub API for Piercies3sc.
 Renders a dense, clean, terminal-inspired profile card with warm amber & red styling.
-No window chrome, no dots, no inner frame.
+1200x560 canvas with panel_x=405 for generous right-side padding.
 """
 
 import os
@@ -209,11 +209,11 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         accent_red = "#cf222e"       # red accent
         divider_color = "#d0d7de"
 
-    width = 1080
+    width = 1200
     height = 560
     
     # ASCII configuration (62 lines, 103 chars)
-    # Scaled to fit comfortably in ~40% left area
+    # Kept approximately the same size, balanced on the left
     ascii_font_size = 5.8
     ascii_line_height = 7.3
     ascii_start_x = 20
@@ -229,7 +229,9 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     ascii_svg = "\n    ".join(ascii_elements)
 
     # Right panel configuration
-    # panel_x = 405 gives ~25px gutter from ASCII right edge (~380px)
+    # panel_x = 405 (moved 40px left from 445)
+    # Gutter from ASCII right edge (~380px) is ~25px
+    # Right padding from longest line (69 chars) is ~91px (at 10.2px/char) or ~41px (at 11px/char)
     panel_x = 405
     panel_y_start = 66
     panel_line_h = 22
@@ -238,7 +240,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
 
     def format_item(label, total_width, value):
         # Prefix is '· ' (2) + label + ' ' (1) + dots + ' ' (1) = total_width
-        # dots_count = total_width - len(label) - 4
         dots_count = max(1, total_width - len(label) - 4)
         dots_str = "." * dots_count
         return (
@@ -252,13 +253,13 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     panel_elements = []
     cur_y = panel_y_start
 
-    # 1. Header
+    # 1. Header (divider: 50 dashes, total 63 chars)
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="18px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_amber}">mert</tspan>'
         f'<tspan fill="{text_muted}">@</tspan>'
         f'<tspan fill="{accent_amber}">github</tspan>'
-        f'<tspan fill="{divider_color}">  --------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}">  --------------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h + gap_h
@@ -300,12 +301,12 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         cur_y += panel_line_h
     cur_y += gap_h
 
-    # 5. Contact Section Header
+    # 5. Contact Section Header (divider: 53 dashes, total 63 chars)
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_red}">- </tspan>'
         f'<tspan fill="{accent_amber}">Contact</tspan>'
-        f'<tspan fill="{divider_color}"> -----------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}"> -----------------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h
@@ -321,21 +322,18 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         cur_y += panel_line_h
     cur_y += gap_h
 
-    # 6. GitHub Stats Section Header
+    # 6. GitHub Stats Section Header (divider: 48 dashes, total 63 chars)
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{font_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_red}">- </tspan>'
         f'<tspan fill="{accent_amber}">GitHub Stats</tspan>'
-        f'<tspan fill="{divider_color}"> ------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}"> ------------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h
 
     # GitHub Stats rows (2 columns)
     # Repos / Stars
-    # Prompt: · Repos: ........ XX                  Stars: ........ XX
-    # Repos prefix: '· ' (2) + 'Repos:' (6) + ' ' (1) + 8 dots + ' ' (1) = 18 chars
-    # Stars prefix: 'Stars:' (6) + ' ' (1) + 8 dots + ' ' (1) = 16 chars
     repos_dots = "." * 8
     stars_dots = "." * 8
     r_val = stats['repos']
@@ -357,9 +355,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     cur_y += panel_line_h
 
     # Commits / Followers
-    # Prompt: · Commits: ...... XX                  Followers: .... XX
-    # Commits prefix: '· ' (2) + 'Commits:' (8) + ' ' (1) + 6 dots + ' ' (1) = 18 chars
-    # Followers prefix: 'Followers:' (10) + ' ' (1) + 4 dots + ' ' (1) = 16 chars
     commits_dots = "." * 6
     followers_dots = "." * 4
     c_val = stats['commits']
@@ -381,8 +376,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     cur_y += panel_line_h
 
     # Lines of Code on GitHub
-    # Prompt: · Lines of Code on GitHub: ... XX,XXX
-    # LOC prefix: '· ' (2) + 'Lines of Code on GitHub:' (24) + ' ' (1) + 3 dots + ' ' (1) = 31 chars
     loc_dots = "." * 3
     l_val = stats["loc"]
     panel_elements.append(
