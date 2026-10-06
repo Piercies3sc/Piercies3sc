@@ -310,7 +310,9 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         add_color = "#1a7f37"        # light mode green for additions
         del_color = "#cf222e"        # light mode red for deletions
 
-    width = 1080
+    # Keep a safe right margin for the longest info-panel lines and headers
+    # at their existing 18px and 21px monospace type sizes.
+    width = 1170
     height = 520
     
     ascii_font_size = 7.0
@@ -348,13 +350,13 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
     panel_elements = []
     cur_y = panel_y_start
 
-    # 1. Header (mert@github: 21px, divider: 52 dashes, total 65 chars)
+    # 1. Header (mert@github: 21px, divider shortened to keep it inside the canvas)
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{header_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_amber}">mert</tspan>'
         f'<tspan fill="{text_muted}">@</tspan>'
         f'<tspan fill="{accent_amber}">github</tspan>'
-        f'<tspan fill="{divider_color}">  ----------------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}">  ---------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h + gap_h
@@ -396,12 +398,12 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         cur_y += panel_line_h
     cur_y += gap_h
 
-    # 5. Contact Section Header (19px, divider: 55 dashes, total 65 chars)
+    # 5. Contact Section Header (19px, divider: 52 dashes)
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{section_header_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_red}">- </tspan>'
         f'<tspan fill="{accent_amber}">Contact</tspan>'
-        f'<tspan fill="{divider_color}"> -------------------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}"> ----------------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h
@@ -417,12 +419,12 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         cur_y += panel_line_h
     cur_y += gap_h
 
-    # 6. GitHub Stats Section Header (19px, divider: 50 dashes, total 65 chars)
+    # 6. GitHub Stats Section Header (19px, divider: 47 dashes)
     panel_elements.append(
         f'<text x="{panel_x}" y="{cur_y:.1f}" font-family="SFMono-Regular, Consolas, \'Liberation Mono\', Menlo, monospace" font-size="{section_header_size}px" font-weight="700" xml:space="preserve">'
         f'<tspan fill="{accent_red}">- </tspan>'
         f'<tspan fill="{accent_amber}">GitHub Stats</tspan>'
-        f'<tspan fill="{divider_color}"> --------------------------------------------------</tspan>'
+        f'<tspan fill="{divider_color}"> -----------------------------------------------</tspan>'
         f'</text>'
     )
     cur_y += panel_line_h
