@@ -7,6 +7,7 @@ import datetime
 import urllib.request
 import urllib.error
 import subprocess
+import math
 from pathlib import Path
 
 USERNAME = "Piercies3sc"
@@ -310,9 +311,6 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         add_color = "#1a7f37"        # light mode green for additions
         del_color = "#cf222e"        # light mode red for deletions
 
-    # Keep a safe right margin for the longest info-panel lines and headers
-    # at their existing 18px and 21px monospace type sizes.
-    width = 1170
     height = 520
     
     ascii_font_size = 7.0
@@ -329,7 +327,13 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         )
     ascii_svg = "\n    ".join(ascii_elements)
 
-    panel_x = 425
+    # Derive the panel position from the portrait's actual monospace advance,
+    # leaving a deliberate 40px gap after its widest non-trailing character.
+    max_ascii_chars = max((len(line.rstrip("\r\n").rstrip()) for line in ascii_lines), default=0)
+    ascii_advance = ascii_font_size * 0.6
+    ascii_right_bound = ascii_start_x + max_ascii_chars * ascii_advance + 2
+    panel_gap = 40
+    panel_x = 0  # Build panel rows at the origin so their content can be measured.
     panel_y_start = 42
     panel_line_h = 25
     gap_h = 15
@@ -507,6 +511,36 @@ def render_svg(theme: str, stats: dict, ascii_lines: list) -> str:
         f'</text>'
     )
 
+    # All panel text uses a monospace face and -0.3px tracking. Measure the
+    # actual generated row strings (including headers/dividers/stats), then
+    # derive both the right-column position and canvas width from those bounds.
+    longest_panel_width = 0.0
+    for element in panel_elements:
+        size_match = re.search(r'font-size="([\d.]+)px"', element)
+        content_match = re.search(r'<text\b[^>]*>(.*?)</text>', element)
+        if not size_match or not content_match:
+            raise ValueError(f"Could not measure generated panel row: {element}")
+        plain_text = html.unescape(re.sub(r"<[^>]+>", "", content_match.group(1)))
+        font_size_px = float(size_match.group(1))
+        glyph_advance = font_size_px * 0.6
+        tracking = -0.3
+        row_width = (
+            len(plain_text) * glyph_advance
+            + max(0, len(plain_text) - 1) * tracking
+            + 2  # Allow for ink overhang beyond the nominal monospace advance.
+        )
+        longest_panel_width = max(longest_panel_width, row_width)
+
+    panel_x = math.ceil(ascii_right_bound + panel_gap)
+    right_padding = 30
+    width = math.ceil((panel_x + longest_panel_width + right_padding) / 10) * 10
+    if panel_x - ascii_right_bound < panel_gap:
+        raise ValueError("Generated info panel does not have the required portrait gap")
+    if width - panel_x - longest_panel_width < right_padding:
+        raise ValueError("Generated info panel does not have the required right padding")
+    # Every generated text row was measured at x=0; move the whole panel as one
+    # unit so labels, separators, section headers, and stats share one boundary.
+    panel_elements = [element.replace('x="0"', f'x="{panel_x}"', 1) for element in panel_elements]
     panel_svg = "\n    ".join(panel_elements)
 
     svg_content = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">
