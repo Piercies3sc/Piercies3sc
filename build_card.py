@@ -111,10 +111,10 @@ def build(s):
     xs = [j for j in range(len(rows_art[0])) if any(rows_art[i][j][0] != " " for i in ys)]
     rows_art = [r[min(xs):max(xs) + 1] for r in rows_art[min(ys):max(ys) + 1]]
     COLS = len(rows_art[0]); ROWS = len(rows_art)
-    FS = 14; C = FS * 0.6
-    AFS = 13; CW = AFS * 0.6; LH = AFS * 1.1
-    PADL = 24; ART_W = COLS * CW; GAP = 44
-    RX = PADL + ART_W + GAP; RIGHT_W = 68 * C + 70; W = int(RX + RIGHT_W)
+    FS = 16; C = FS * 0.6
+    AFS = 11.6; CW = AFS * 0.6; LH = AFS * 1.2
+    PADL = 20; ART_W = COLS * CW; GAP = 26
+    RX = PADL + ART_W + GAP; RIGHT_W = 66 * C + 44; W = int(RX + RIGHT_W)
     GOLD="#d4a540"; WHITE="#e6edf3"; GRAY="#6e7681"; ORANGE="#f0883e"; GREEN="#3fb950"; RED="#f85149"
     loc = s["loc_add"] - s["loc_del"]
     rows = [("head",), ("kv","OS","Windows 11, macOS, iOS"), ("kv","Uptime",uptime()),
@@ -127,8 +127,8 @@ def build(s):
     rows += [("sec","Contact"), ("kv","Email.Personal",EMAIL), ("kv","Discord",DISCORD)] + [("gap",),
              ("sec","GitHub Stats"), ("kv","Repos",f"{s['repos']} {{Contributed: {s['contributed']}}}"),
              ("kv","Commits",f"{s['commits']:,}"), ("kv","Stars / Followers",f"{s['stars']:,} / {s['followers']:,}"), ("kv","Last.Commit",s.get("last_commit","-")), ("loc",)]
-    LHR = 26
-    hg = lambda r: {"head":40,"gap":14,"sec":LHR+4}.get(r[0], LHR)
+    LHR = 23
+    hg = lambda r: {"head":38,"gap":12,"sec":LHR+3}.get(r[0], LHR)
     block_h = sum(hg(r) for r in rows) + 30
     H = int(max(ROWS * LH, block_h) + 60)
     top_art = (H - ROWS * LH) / 2; y = (H - block_h) / 2 + 22
@@ -149,22 +149,22 @@ def build(s):
     t = 1.4; defs = []; body = []; step = 0
     for r in rows:
         k = r[0]
-        if k == "gap": y += 14; continue
+        if k == "gap": y += 12; continue
         step += 1; cid = f"c{step}"
         if k == "head":
-            n = 11; yy = y + 10; adv = 40
+            n = 11; yy = y + 10; adv = 38
             txt = (f'<tspan font-size="22" font-weight="bold" fill="{GOLD}">mert</tspan><tspan font-size="22" font-weight="bold" fill="#8b949e">@</tspan>'
                    f'<tspan font-size="22" font-weight="bold" fill="{GOLD}">github</tspan>')
         elif k == "sec":
-            n = 44; yy = y; adv = LHR + 4
-            txt = f'<tspan fill="{ORANGE}" font-weight="bold">— {r[1]}</tspan><tspan fill="#484f58"> {"-"*(36-len(r[1]))}</tspan>'
+            n = 44; yy = y; adv = LHR + 3
+            txt = f'<tspan fill="{ORANGE}" font-weight="bold">— {r[1]}</tspan><tspan fill="#484f58"> {"-"*(32-len(r[1]))}</tspan>'
         elif k == "loc":
             n = 48; yy = y; adv = LHR
-            txt = (f'<tspan fill="{GRAY}">· </tspan><tspan fill="{GOLD}">Lines of Code:</tspan><tspan fill="{GRAY}"> {"."*11} </tspan>'
+            txt = (f'<tspan fill="{GRAY}">· </tspan><tspan fill="{GOLD}">Lines of Code:</tspan><tspan fill="{GRAY}"> {"."*9} </tspan>'
                    f'<tspan fill="{WHITE}" font-weight="bold">{loc:,}</tspan><tspan fill="{GRAY}"> ( </tspan><tspan fill="{GREEN}" font-weight="bold">{s["loc_add"]:,}++</tspan>'
                    f'<tspan fill="{GRAY}">, </tspan><tspan fill="{RED}" font-weight="bold">{s["loc_del"]:,}--</tspan><tspan fill="{GRAY}"> )</tspan>')
         else:
-            key, v = r[1], r[2]; dots = "." * max(3, 26 - len(key) - 1); yy = y; adv = LHR
+            key, v = r[1], r[2]; dots = "." * max(3, 24 - len(key) - 1); yy = y; adv = LHR
             n = 2 + len(key) + 1 + len(dots) + 2 + len(v)
             txt = (f'<tspan fill="{GRAY}">· </tspan><tspan fill="{GOLD}">{html.escape(key)}:</tspan><tspan fill="{GRAY}"> {dots} </tspan>'
                    f'<tspan fill="{WHITE}">{html.escape(v)}</tspan>')
